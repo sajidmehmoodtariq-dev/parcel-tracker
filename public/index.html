@@ -3,135 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parcel Tracker - Route Finder</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <title>Parcel Tracker - Home</title>
     <link rel="stylesheet" href="/styles.css">
     <style>
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
             display: flex;
-            height: 100vh;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
         }
-        .sidebar {
-            width: 350px;
-            background: #2c3e50;
-            color: white;
-            padding: 20px;
-            overflow-y: auto;
-        }
-        .sidebar h1 {
-            margin: 0 0 20px 0;
-            font-size: 24px;
-        }
-        .section {
-            background: #34495e;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-        .section h3 {
-            margin: 0 0 15px 0;
-            font-size: 18px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 14px;
-        }
-        .form-group select {
-            width: 100%;
-            padding: 8px;
-            border-radius: 4px;
-            border: none;
-        }
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            width: 100%;
-            margin-top: 10px;
-        }
-        .btn-primary {
-            background: #3498db;
-            color: white;
-        }
-        .btn-primary:hover {
-            background: #2980b9;
-        }
-        .btn-danger {
-            background: #e74c3c;
-            color: white;
-        }
-        .btn-danger:hover {
-            background: #c0392b;
-        }
-        .btn-link {
-            background: transparent;
-            color: #3498db;
-            text-decoration: none;
-            display: block;
+        .container {
             text-align: center;
+            color: white;
+            max-width: 1100px;
+            width: 92%;
+            padding: 0 20px;
         }
-        #map {
-            flex: 1;
-            height: 100vh;
+        h1 {
+            font-size: 68px;
+            margin-bottom: 12px;
+            margin-top: 0;
         }
-        .route-info {
-            background: #1abc9c;
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 10px;
+        .subtitle {
+            font-size: 28px;
+            margin-bottom: 45px;
+            opacity: 0.9;
+        }
+        .options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 35px;
+            margin-top: 35px;
+        }
+        .option-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 45px 30px;
+            text-decoration: none;
+            color: white;
+            transition: transform 0.3s, background 0.3s;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        .option-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .option-icon {
+            font-size: 64px;
+            margin-bottom: 18px;
+        }
+        .option-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 14px;
+        }
+        .option-desc {
+            font-size: 16px;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+        .coming-soon {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .coming-soon:hover {
+            transform: none;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .badge {
+            display: inline-block;
+            background: #f39c12;
+            padding: 7px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            margin-top: 12px;
         }
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <h1>📦 Route Finder</h1>
+    <div class="container">
+        <h1>📦 Parcel Tracker</h1>
+        <p class="subtitle">Smart Logistics & Route Management System</p>
         
-        <div class="section">
-            <h3>Find Route</h3>
-            <div class="form-group">
-                <label>Start Location:</label>
-                <select id="startNode">
-                    <option value="">Select start node...</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>End Location:</label>
-                <select id="endNode">
-                    <option value="">Select end node...</option>
-                </select>
-            </div>
-            <button id="findRoute" class="btn btn-primary">Find Route</button>
-            <button id="clearRoute" class="btn btn-danger">Clear Route</button>
-            <div id="routeInfo"></div>
-        </div>
+        <div class="options">
+            <a href="/admin" class="option-card">
+                <div class="option-icon">⚙️</div>
+                <div class="option-title">Admin Dashboard</div>
+                <div class="option-desc">Manage nodes, edges, and network infrastructure</div>
+            </a>
 
-        <div class="section">
-            <h3>Block Road</h3>
-            <div class="form-group">
-                <label>Select Edge to Block/Unblock:</label>
-                <select id="blockEdge">
-                    <option value="">Select edge...</option>
-                </select>
-            </div>
-            <button id="toggleBlock" class="btn btn-danger">Toggle Block</button>
-        </div>
+            <a href="/route" class="option-card">
+                <div class="option-icon">🗺️</div>
+                <div class="option-title">Find Route</div>
+                <div class="option-desc">Calculate shortest path between locations</div>
+            </a>
 
-        <div class="section">
-            <a href="/admin" class="btn btn-link">Admin Dashboard →</a>
+            <div class="option-card coming-soon">
+                <div class="option-icon">📮</div>
+                <div class="option-title">Send Package</div>
+                <div class="option-desc">Track and manage parcel deliveries</div>
+                <span class="badge">Coming Soon</span>
+            </div>
         </div>
     </div>
-
-    <div id="map"></div>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="/app.js"></script>
 </body>
 </html>

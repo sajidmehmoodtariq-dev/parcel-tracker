@@ -242,6 +242,18 @@ int main() {
     // STATIC FILE SERVING
     // ====================
 
+    // Serve route.html
+    CROW_ROUTE(app, "/route")
+    ([](){
+        std::string content = read_file("public/route.html");
+        if (content.empty()) {
+            return crow::response(404, "Route page not found");
+        }
+        crow::response res(content);
+        res.set_header("Content-Type", "text/html");
+        return res;
+    });
+
     // Serve admin.html
     CROW_ROUTE(app, "/admin")
     ([](){
@@ -304,6 +316,17 @@ int main() {
     CROW_ROUTE(app, "/admin.js")
     ([](){
         std::string content = read_file("public/admin.js");
+        if (content.empty()) {
+            return crow::response(404, "File not found");
+        }
+        crow::response res(content);
+        res.set_header("Content-Type", "application/javascript");
+        return res;
+    });
+
+    CROW_ROUTE(app, "/route.js")
+    ([](){
+        std::string content = read_file("public/route.js");
         if (content.empty()) {
             return crow::response(404, "File not found");
         }
