@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Parcel Tracker</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="/admin.css">
+</head>
+<body>
+    <div class="dashboard">
+        <div class="sidebar">
+            <h1>📦 Admin Dashboard</h1>
+            
+            <div class="section">
+                <h3>Map Controls</h3>
+                <button id="addNodeMode" class="btn btn-primary">Add Node Mode</button>
+                <button id="viewMode" class="btn">View Mode</button>
+            </div>
+
+            <div class="section">
+                <h3>Add Node</h3>
+                <div class="form-group">
+                    <label>Node Name:</label>
+                    <input type="text" id="nodeName" placeholder="Enter location name">
+                </div>
+                <div class="form-group">
+                    <label>Latitude:</label>
+                    <input type="number" id="nodeLat" step="0.000001" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Longitude:</label>
+                    <input type="number" id="nodeLon" step="0.000001" readonly>
+                </div>
+                <button id="saveNode" class="btn btn-success" disabled>Save Node</button>
+            </div>
+
+            <div class="section">
+                <h3>Add Edge</h3>
+                <div class="form-group">
+                    <label>From Node:</label>
+                    <select id="edgeFrom">
+                        <option value="">Select node...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>To Node:</label>
+                    <select id="edgeTo">
+                        <option value="">Select node...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Distance (km):</label>
+                    <input type="number" id="edgeDistance" step="0.1" value="1.0">
+                </div>
+                <div class="form-group">
+                    <label>Traffic Weight:</label>
+                    <input type="number" id="edgeTraffic" step="0.1" value="1.0" min="0.1" max="5.0">
+                </div>
+                <button id="saveEdge" class="btn btn-success">Save Edge</button>
+            </div>
+
+            <div class="section">
+                <h3>Statistics</h3>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Nodes:</span>
+                        <span id="nodeCount" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Edges:</span>
+                        <span id="edgeCount" class="stat-value">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Delete</h3>
+                <div class="form-group">
+                    <label>Delete Node:</label>
+                    <select id="deleteNodeSelect">
+                        <option value="">Select node to delete...</option>
+                    </select>
+                    <button id="deleteNode" class="btn btn-danger">Delete Node</button>
+                </div>
+                <div class="form-group">
+                    <label>Delete Edge:</label>
+                    <select id="deleteEdgeSelect">
+                        <option value="">Select edge to delete...</option>
+                    </select>
+                    <button id="deleteEdge" class="btn btn-danger">Delete Edge</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <a href="/" class="btn btn-link">← Back to Main</a>
+            </div>
+        </div>
+
+        <div class="map-container">
+            <div id="map"></div>
+            <div id="status" class="status-bar">Click on map to add nodes</div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/admin.js"></script>
+</body>
+</html>
