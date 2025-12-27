@@ -22,10 +22,11 @@ struct Edge {
     int destination;
     double distance;
     double trafficWeight;
+    bool blocked;
 
-    Edge() : source(-1), destination(-1), distance(0.0), trafficWeight(1.0) {}
-    Edge(int src, int dest, double dist, double traffic = 1.0)
-        : source(src), destination(dest), distance(dist), trafficWeight(traffic) {}
+    Edge() : source(-1), destination(-1), distance(0.0), trafficWeight(1.0), blocked(false) {}
+    Edge(int src, int dest, double dist, double traffic = 1.0, bool blk = false)
+        : source(src), destination(dest), distance(dist), trafficWeight(traffic), blocked(blk) {}
 };
 
 class Graph {
@@ -137,7 +138,8 @@ public:
             file << edges[i].source << "," 
                  << edges[i].destination << "," 
                  << edges[i].distance << "," 
-                 << edges[i].trafficWeight << "\n";
+                 << edges[i].trafficWeight << ","
+                 << edges[i].blocked << "\n";
         }
 
         file.close();
@@ -195,7 +197,17 @@ public:
                     int dest = std::stoi(tokens[1]);
                     double distance = std::stod(tokens[2]);
                     double traffic = tokens.getSize() >= 4 ? std::stod(tokens[3]) : 1.0;
-                    addEdge(source, dest, distance, traffic);
+                    bool blocked = tokens.getSize() >= 5 ? (std::stoi(tokens[4]) != 0) : false;
+                    
+                    // Add edge with blocked status
+                    int srcIdx = findNodeIndex(source);
+                    int destIdx = findNodeIndex(dest);
+                    if (srcIdx != -1 && destIdx != -1) {
+                        Edge newEdge(source, dest, distance, traffic, blocked);
+                        adjacencyList[srcIdx].push_back(newEdge);
+                        Edge reverseEdge(dest, source, distance, traffic, blocked);
+                        adjacencyList[destIdx].push_back(reverseEdge);
+                    }
                 }
             }
         }
@@ -239,6 +251,102 @@ public:
         adjacencyList.pop_back();
 
         return true;
+    }
+
+    // Block/Unblock edge
+    bool toggleEdgeBlock(int sourceId, int destId) {
+        int srcIndex = findNodeIndex(sourceId);
+        int destIndex = findNodeIndex(destId);
+
+        if (srcIndex == -1 || destIndex == -1) return false;
+
+        bool found = false;
+        // Update both directions
+        for (int i = 0; i < adjacencyList[srcIndex].getSize(); i++) {
+            if (adjacencyList[srcIndex][i].destination == destId) {
+                adjacencyList[srcIndex][i].blocked = !adjacencyList[srcIndex][i].blocked;
+                found = true;
+                break;
+            }
+        }
+        for (int i = 0; i < adjacencyList[destIndex].getSize(); i++) {
+            if (adjacencyList[destIndex][i].destination == sourceId) {
+                adjacencyList[destIndex][i].blocked = !adjacencyList[destIndex][i].blocked;
+                break;
+            }
+        }
+        return found;
+    }
+
+    // Dijkstra's algorithm
+    Vector<Node> dijkstra(int startId, int endId) {
+        Vector<Node> path;
+        int startIdx = findNodeIndex(startId);
+        int endIdx = findNodeIndex(endId);
+
+        if (startIdx == -1 || endIdx == -1) return path;
+
+        int n = nodes.getSize();
+        Vector<double> dist;
+        Vector<int> prev;
+        Vector<bool> visited;
+
+        // Initialize
+        for (int i = 0; i < n; i++) {
+            dist.push_back(999999999.0); // infinity
+            prev.push_back(-1);
+            visited.push_back(false);
+        }
+        dist[startIdx] = 0;
+
+        // Dijkstra
+        for (int count = 0; count < n; count++) {
+            int u = -1;
+            double minDist = 999999999.0;
+
+            // Find unvisited node with minimum distance
+            for (int i = 0; i < n; i++) {
+                if (!visited[i] && dist[i] < minDist) {
+                    minDist = dist[i];
+                    u = i;
+                }
+            }
+
+            if (u == -1) break;
+            visited[u] = true;
+
+            // Update distances to neighbors
+            for (int i = 0; i < adjacencyList[u].getSize(); i++) {
+                Edge& edge = adjacencyList[u][i];
+                if (edge.blocked) continue; // Skip blocked edges
+
+                int v = findNodeIndex(edge.destination);
+                if (v != -1 && !visited[v]) {
+                    double weight = edge.distance * edge.trafficWeight;
+                    if (dist[u] + weight < dist[v]) {
+                        dist[v] = dist[u] + weight;
+                        prev[v] = u;
+                    }
+                }
+            }
+        }
+
+        // Reconstruct path
+        if (prev[endIdx] == -1 && startIdx != endIdx) {
+            return path; // No path found
+        }
+
+        Vector<int> pathIndices;
+        for (int at = endIdx; at != -1; at = prev[at]) {
+            pathIndices.push_back(at);
+        }
+
+        // Reverse path
+        for (int i = pathIndices.getSize() - 1; i >= 0; i--) {
+            path.push_back(nodes[pathIndices[i]]);
+        }
+
+        return path;
     }
 };
 

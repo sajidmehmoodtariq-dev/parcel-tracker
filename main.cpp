@@ -5,7 +5,7 @@
 
 // Global graph instance
 Graph cityGraph;
-const std::string MAP_FILE = "map_data.txt";
+const std::string MAP_FILE = "data/map_data.txt";
 
 // Helper function to read file content
 std::string read_file(const std::string& path) {
@@ -110,6 +110,7 @@ int main() {
             response[i]["destination"] = edges[i].destination;
             response[i]["distance"] = edges[i].distance;
             response[i]["trafficWeight"] = edges[i].trafficWeight;
+            response[i]["blocked"] = edges[i].blocked;
         }
         
         return response;
@@ -184,6 +185,56 @@ int main() {
             return crow::response(200, response);
         }
         
+        return crow::response(404, "Edge not found");
+    });
+
+    // GET route (Dijkstra)
+    CROW_ROUTE(app, "/api/get_route")
+    ([graphPtr](const crow::request& req){
+        auto start = req.url_params.get("start");
+        auto end = req.url_params.get("end");
+
+        if (!start || !end) {
+            return crow::response(400, "Missing start or end parameter");
+        }
+
+        int startId = std::stoi(start);
+        int endId = std::stoi(end);
+
+        Vector<Node> path = graphPtr->dijkstra(startId, endId);
+
+        crow::json::wvalue response;
+        if (path.getSize() == 0) {
+            response["success"] = false;
+            response["message"] = "No path found";
+            return crow::response(404, response);
+        }
+
+        response["success"] = true;
+        response["path"] = crow::json::wvalue::list();
+        for (int i = 0; i < path.getSize(); i++) {
+            crow::json::wvalue node;
+            node["id"] = path[i].id;
+            node["name"] = path[i].name;
+            node["lat"] = path[i].lat;
+            node["lon"] = path[i].lon;
+            response["path"][i] = std::move(node);
+        }
+
+        return crow::response(200, response);
+    });
+
+    // POST toggle edge block
+    CROW_ROUTE(app, "/api/edges/<int>/<int>/toggle_block").methods(crow::HTTPMethod::POST)
+    ([graphPtr](int sourceId, int destId){
+        if (graphPtr->toggleEdgeBlock(sourceId, destId)) {
+            graphPtr->saveMap(MAP_FILE);
+            
+            crow::json::wvalue response;
+            response["success"] = true;
+            response["message"] = "Edge block toggled";
+            return crow::response(200, response);
+        }
         return crow::response(404, "Edge not found");
     });
 
