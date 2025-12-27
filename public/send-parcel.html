@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Send Parcel - Parcel Tracker</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .form-row .form-group {
+            margin-bottom: 0;
+        }
+        .priority-info {
+            background: #f0f7ff;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #0066cc;
+            margin-top: 5px;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+        .btn-link {
+            background: #2c3e50;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        .btn-link:hover {
+            background: #1a252f;
+        }
+        .success-message {
+            display: none;
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+        }
+        .error-message {
+            display: none;
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+        }
+        .locations-loading {
+            color: #666;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📮 Send Parcel</h1>
+        <p class="subtitle">Fill in the parcel details below</p>
+
+        <div class="success-message" id="successMsg"></div>
+        <div class="error-message" id="errorMsg"></div>
+
+        <form id="parcelForm">
+            <div class="form-group">
+                <label for="weight">Weight (kg) *</label>
+                <input type="number" id="weight" min="0.1" max="20" step="0.1" required placeholder="e.g., 2.5">
+                <div class="priority-info" style="margin-top: 5px; background: #fff3cd; color: #856404;">
+                    📦 0-5 kg: Assigned to Rider | 🚗 6-20 kg: Assigned to Car
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="priority">Delivery Priority *</label>
+                <select id="priority" required onchange="updatePriorityInfo()">
+                    <option value="">Select priority...</option>
+                    <option value="1">Standard (2-3 days)</option>
+                    <option value="2">Overnight Express</option>
+                </select>
+                <div class="priority-info" id="priorityInfo"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="location">Pickup Location *</label>
+                <select id="location" required>
+                    <option value="">Loading locations...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="destination">Destination *</label>
+                <select id="destination" required>
+                    <option value="">Loading locations...</option>
+                </select>
+                <span class="locations-loading" id="locationsLoading"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Send Parcel</button>
+        </form>
+
+        <a href="/" class="btn btn-link">← Back to Home</a>
+    </div>
+
+    <script>
+        const priorityDescriptions = {
+            '1': '📦 Standard delivery - Regular processing queue',
+            '2': '🚀 Overnight Express - URGENT! Sent first, gets priority processing'
+        };
+
+        function updatePriorityInfo() {
+            const priority = document.getElementById('priority').value;
+            const info = document.getElementById('priorityInfo');
+            info.textContent = priority ? priorityDescriptions[priority] : '';
+        }
+
+        async function loadLocations() {
+            try {
+                const response = await fetch('/api/nodes');
+                const locations = await response.json();
+
+                const locationSelect = document.getElementById('location');
+                const destinationSelect = document.getElementById('destination');
+                
+                locationSelect.innerHTML = '<option value="">Select pickup location...</option>';
+                destinationSelect.innerHTML = '<option value="">Select destination...</option>';
+
+                locations.forEach(loc => {
+                    const option1 = document.createElement('option');
+                    option1.value = loc.id;
+                    option1.textContent = `${loc.name} (ID: ${loc.id})`;
+                    locationSelect.appendChild(option1);
+
+                    const option2 = document.createElement('option');
+                    option2.value = loc.id;
+                    option2.textContent = `${loc.name} (ID: ${loc.id})`;
+                    destinationSelect.appendChild(option2);
+                });
+
+                document.getElementById('locationsLoading').textContent = '';
+            } catch (error) {
+                console.error('Failed to load locations:', error);
+                document.getElementById('locationsLoading').textContent = 'Error loading locations';
+            }
+        }
+
+        async function submitParcel(e) {
+            e.preventDefault();
+
+            const weight = parseFloat(document.getElementById('weight').value);
+            const priority = parseInt(document.getElementById('priority').value);
+            const location = parseInt(document.getElementById('location').value);
+            const destination = parseInt(document.getElementById('destination').value);
+
+            if (!weight || !priority || !location || !destination) {
+                showError('Please fill all fields');
+                return;
+            }
+
+            if (location === destination) {
+                showError('Pickup and destination cannot be the same location');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/new_parcel', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        weight: weight,
+                        priority: priority,
+                        location: location,
+                        destination: destination
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const riderInfo = data.riderName && data.riderName !== 'None' 
+                        ? ` Assigned to: ${data.riderName}` 
+                        : ' (No rider available)';
+                    showSuccess(`Parcel #${data.parcelId} created successfully! Priority: ${priority === 2 ? 'Overnight' : 'Standard'}.${riderInfo}`);
+                    document.getElementById('parcelForm').reset();
+                    document.getElementById('priorityInfo').textContent = '';
+                } else {
+                    showError(data.message || 'Failed to create parcel');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Error creating parcel');
+            }
+        }
+
+        function showSuccess(msg) {
+            const msgEl = document.getElementById('successMsg');
+            msgEl.textContent = msg;
+            msgEl.style.display = 'block';
+            document.getElementById('errorMsg').style.display = 'none';
+
+            setTimeout(() => {
+                msgEl.style.display = 'none';
+            }, 5000);
+        }
+
+        function showError(msg) {
+            const msgEl = document.getElementById('errorMsg');
+            msgEl.textContent = msg;
+            msgEl.style.display = 'block';
+            document.getElementById('successMsg').style.display = 'none';
+        }
+
+        document.getElementById('parcelForm').addEventListener('submit', submitParcel);
+
+        // Load locations on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadLocations();
+        });
+    </script>
+</body>
+</html>

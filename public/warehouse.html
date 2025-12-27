@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse - Parcel Tracker</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+        }
+        .subtitle {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .rider-section {
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 5px solid #667eea;
+        }
+        .rider-header {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .rider-header:hover {
+            background: linear-gradient(135deg, #e4e7eb 0%, #b8c5d8 100%);
+        }
+        .rider-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .rider-icon {
+            width: 50px;
+            height: 50px;
+            background: #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+        .rider-details h3 {
+            margin: 0;
+            font-size: 20px;
+            color: #2c3e50;
+        }
+        .rider-status {
+            font-size: 13px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .rider-stats {
+            display: flex;
+            gap: 20px;
+        }
+        .rider-stat {
+            text-align: center;
+        }
+        .rider-stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .rider-stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+        .parcels-container {
+            padding: 20px;
+            display: none;
+        }
+        .parcels-container.active {
+            display: block;
+        }
+        .parcel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        .parcel-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            border-left: 4px solid #3498db;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .parcel-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .parcel-card.priority-high {
+            border-left-color: #e74c3c;
+        }
+        .parcel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .parcel-id {
+            font-weight: bold;
+            font-size: 16px;
+            color: #2c3e50;
+        }
+        .priority-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            color: white;
+        }
+        .priority-overnight {
+            background: #e74c3c;
+        }
+        .priority-standard {
+            background: #3498db;
+        }
+        .status-delivered {
+            background: #27ae60;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        .parcel-details {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.6;
+        }
+        .parcel-route {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            font-size: 12px;
+            color: #666;
+        }
+        .route-arrow {
+            color: #667eea;
+            margin: 0 5px;
+        }
+        .no-parcels {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+            font-style: italic;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .status-available {
+            background: #2ecc71;
+            color: white;
+        }
+        .status-delivering {
+            background: #f39c12;
+            color: white;
+        }
+        .back-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .back-button:hover {
+            background: #f5f5f5;
+        }
+        .capacity-bar {
+            width: 100px;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .capacity-fill {
+            height: 100%;
+            background: #667eea;
+            transition: width 0.3s;
+        }
+        .capacity-fill.full {
+            background: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-button">← Back to Home</a>
+        
+        <header>
+            <h1>📦 Warehouse Management</h1>
+            <div class="subtitle">View parcels grouped by assigned riders</div>
+        </header>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalRiders">0</div>
+                <div class="stat-label">Active Riders</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalParcels">0</div>
+                <div class="stat-label">Total Parcels</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="inTransit">0</div>
+                <div class="stat-label">In Transit</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="delivered">0</div>
+                <div class="stat-label">Delivered</div>
+            </div>
+        </div>
+
+        <div id="ridersContainer">
+            <!-- Riders and their parcels will be loaded here -->
+        </div>
+    </div>
+
+    <script>
+        let riders = [];
+        let parcels = [];
+
+        async function loadData() {
+            try {
+                // Load riders
+                const ridersResponse = await fetch('/api/riders');
+                riders = await ridersResponse.json();
+
+                // Load all parcels
+                const parcelsResponse = await fetch('/api/parcels');
+                parcels = await parcelsResponse.json();
+
+                // Get node names for display
+                const nodesResponse = await fetch('/api/nodes');
+                const nodes = await nodesResponse.json();
+                const nodeMap = {};
+                nodes.forEach(node => {
+                    nodeMap[node.id] = node.name;
+                });
+
+                updateStats();
+                displayRiders(nodeMap);
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        function updateStats() {
+            const activeRiders = riders.filter(r => r.parcelCount > 0).length;
+            const totalParcels = parcels.length;
+            const inTransit = parcels.filter(p => p.status === 'in_transit').length;
+            const delivered = parcels.filter(p => p.status === 'delivered').length;
+
+            document.getElementById('totalRiders').textContent = activeRiders;
+            document.getElementById('totalParcels').textContent = totalParcels;
+            document.getElementById('inTransit').textContent = inTransit;
+            document.getElementById('delivered').textContent = delivered;
+        }
+
+        function displayRiders(nodeMap) {
+            const container = document.getElementById('ridersContainer');
+            container.innerHTML = '';
+
+            // Sort riders by parcel count (busiest first)
+            const sortedRiders = [...riders].sort((a, b) => b.parcelCount - a.parcelCount);
+
+            sortedRiders.forEach(rider => {
+                const riderSection = document.createElement('div');
+                riderSection.className = 'rider-section';
+                
+                const statusClass = rider.status === 'available' ? 'status-available' : 'status-delivering';
+                const capacityPercent = (rider.parcelCount / rider.capacity) * 100;
+                const capacityClass = capacityPercent >= 100 ? 'full' : '';
+                const vehicleIcon = rider.vehicleType === 'Car' ? '🚗' : '🚴';
+
+                riderSection.innerHTML = `
+                    <div class="rider-header" onclick="toggleParcels('rider-${rider.id}')">
+                        <div class="rider-info">
+                            <div class="rider-icon">${vehicleIcon}</div>
+                            <div class="rider-details">
+                                <h3>${rider.name}</h3>
+                                <div class="rider-status">
+                                    <span class="status-badge ${statusClass}">${rider.status}</span>
+                                    Location: ${nodeMap[rider.currentLocationId] || 'Unknown'}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="rider-stats">
+                            <div class="rider-stat">
+                                <div class="rider-stat-value">${rider.parcelCount}</div>
+                                <div class="rider-stat-label">Parcels</div>
+                                <div class="capacity-bar">
+                                    <div class="capacity-fill ${capacityClass}" style="width: ${capacityPercent}%"></div>
+                                </div>
+                            </div>
+                            <div class="rider-stat">
+                                <div class="rider-stat-value">${rider.availableSlots}</div>
+                                <div class="rider-stat-label">Available</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="parcels-container" id="rider-${rider.id}">
+                        <div class="parcel-grid" id="parcels-${rider.id}">
+                            <!-- Parcels will be loaded here -->
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(riderSection);
+
+                // Load parcels for this rider
+                loadRiderParcels(rider.id, nodeMap);
+            });
+        }
+
+        async function loadRiderParcels(riderId, nodeMap) {
+            try {
+                const response = await fetch(`/api/rider/${riderId}`);
+                const data = await response.json();
+
+                const container = document.getElementById(`parcels-${riderId}`);
+                
+                if (!data.parcels || data.parcels.length === 0) {
+                    container.innerHTML = '<div class="no-parcels">No parcels assigned yet</div>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                data.parcels.forEach(parcel => {
+                    const priorityClass = parcel.priority === 2 ? 'priority-high' : '';
+                    const priorityText = parcel.priority === 2 ? 'Overnight' : 'Standard';
+                    const priorityBadgeClass = parcel.priority === 2 ? 'priority-overnight' : 'priority-standard';
+                    const deliveredBadge = parcel.status === 'delivered' ? '<span class="status-delivered">✓ Delivered</span>' : '';
+
+                    const parcelCard = document.createElement('div');
+                    parcelCard.className = `parcel-card ${priorityClass}`;
+                    parcelCard.innerHTML = `
+                        <div class="parcel-header">
+                            <span class="parcel-id">Parcel #${parcel.id}</span>
+                            <span class="priority-badge ${priorityBadgeClass}">${priorityText}</span>
+                            ${deliveredBadge}
+                        </div>
+                        <div class="parcel-details">
+                            <div><strong>Weight:</strong> ${parcel.weight} kg</div>
+                            <div><strong>Status:</strong> ${parcel.status}</div>
+                            <div class="parcel-route">
+                                <strong>Route:</strong> <span class="route-arrow">→</span> ${parcel.destinationName || 'Destination'}
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(parcelCard);
+                });
+            } catch (error) {
+                console.error(`Error loading parcels for rider ${riderId}:`, error);
+            }
+        }
+
+        function toggleParcels(riderId) {
+            const container = document.getElementById(riderId);
+            container.classList.toggle('active');
+        }
+
+        // Initial load
+        loadData();
+    </script>
+</body>
+</html>

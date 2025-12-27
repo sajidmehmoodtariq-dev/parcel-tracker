@@ -35,8 +35,8 @@
         }
         .options {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 35px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
             margin-top: 35px;
         }
         .option-card {
@@ -103,12 +103,23 @@
                 <div class="option-desc">Calculate shortest path between locations</div>
             </a>
 
-            <div class="option-card coming-soon">
+            <a href="/send-parcel" class="option-card">
                 <div class="option-icon">📮</div>
                 <div class="option-title">Send Package</div>
                 <div class="option-desc">Track and manage parcel deliveries</div>
-                <span class="badge">Coming Soon</span>
-            </div>
+            </a>
+
+            <a href="/warehouse" class="option-card">
+                <div class="option-icon">🏭</div>
+                <div class="option-title">Warehouse View</div>
+                <div class="option-desc">View priority queue and parcel management</div>
+            </a>
+
+            <a href="/tracking" class="option-card">
+                <div class="option-icon">🚚</div>
+                <div class="option-title">Live Tracking</div>
+                <div class="option-desc">Real-time parcel movement simulation</div>
+            </a>
         </div>
     </div>
 </body>

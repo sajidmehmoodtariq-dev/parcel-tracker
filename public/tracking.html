@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Tracking - Parcel Tracker</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            height: 100vh;
+        }
+        .sidebar {
+            width: 400px;
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .sidebar h1 {
+            margin: 0 0 20px 0;
+            font-size: 24px;
+        }
+        .section {
+            background: #34495e;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .section h3 {
+            margin: 0 0 15px 0;
+            font-size: 18px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            border: none;
+            box-sizing: border-box;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        .btn-success {
+            background: #2ecc71;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #27ae60;
+        }
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+        }
+        .btn-warning:hover {
+            background: #e67e22;
+        }
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        .info-box {
+            background: #2c3e50;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        .info-item {
+            margin: 8px 0;
+            font-size: 13px;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #3498db;
+        }
+        #map {
+            flex: 1;
+            height: 100vh;
+        }
+        .stat {
+            display: inline-block;
+            background: #2c3e50;
+            padding: 8px 15px;
+            border-radius: 5px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #3498db;
+        }
+        .stat-label {
+            font-size: 11px;
+            color: #95a5a6;
+        }
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .toggle {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #95a5a6;
+            transition: 0.4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #2ecc71;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        .rider-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .rider-item {
+            background: #2c3e50;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .rider-item:hover {
+            background: #34495e;
+        }
+        .rider-item.selected {
+            background: #3498db;
+        }
+        .rider-name {
+            font-weight: bold;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
+        .rider-info {
+            font-size: 12px;
+            color: #bdc3c7;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        .badge-delivering {
+            background: #f39c12;
+            color: white;
+        }
+        .badge-available {
+            background: #2ecc71;
+            color: white;
+        }
+        .notifications {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .notification {
+            background: #34495e;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+            font-size: 12px;
+        }
+        .notification.pickup {
+            border-left-color: #f39c12;
+        }
+        .notification.delivery {
+            border-left-color: #2ecc71;
+        }
+        .notification-time {
+            color: #95a5a6;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h1>🚚 Live Tracking</h1>
+        
+        <div class="section">
+            <h3>📬 Notifications</h3>
+            <button class="btn btn-primary" onclick="clearNotifications()" style="width:100%; margin-bottom:10px; font-size:12px;">Clear All</button>
+            <div class="notifications" id="notifications">
+                <p style="color:#95a5a6;font-style:italic;font-size:12px;">No recent notifications</p>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h3>Statistics</h3>
+            <div class="stat">
+                <div class="stat-value" id="activeRiders">0</div>
+                <div class="stat-label">Active Riders</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="totalParcels">0</div>
+                <div class="stat-label">Total Parcels</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Controls</h3>
+            <div class="toggle-container">
+                <label>Auto-Update</label>
+                <label class="toggle">
+                    <input type="checkbox" id="autoUpdateToggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <button class="btn btn-success" onclick="advanceTime()">⏩ Advance Time</button>
+            <button class="btn btn-warning" onclick="undoMove()">↶ Undo</button>
+            <button class="btn btn-primary" onclick="loadData()">🔄 Refresh Now</button>
+        </div>
+
+        <div class="section">
+            <h3>Active Riders</h3>
+            <div class="rider-list" id="riderList">
+                <!-- Riders will be loaded here -->
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Track by ID</h3>
+            <div class="form-group">
+                <input type="number" id="trackingId" placeholder="Enter Parcel ID">
+            </div>
+            <button class="btn btn-primary" onclick="trackById()">Track Parcel</button>
+            <div class="info-box" id="trackingInfo" style="display:none;">
+                <!-- Tracking info will be displayed here -->
+            </div>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        let map;
+        let riderMarkers = {};
+        let routeLine = null; // Store current route line
+        let autoUpdateInterval;
+        let riders = [];
+        let selectedRiderId = null;
+
+        // Initialize map
+        map = L.map('map').setView([51.505, -0.09], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Load nodes and fit map
+        async function initMap() {
+            try {
+                const response = await fetch('/api/nodes');
+                const nodes = await response.json();
+                
+                if (nodes.length > 0) {
+                    const bounds = L.latLngBounds(nodes.map(n => [n.lat, n.lon]));
+                    map.fitBounds(bounds, { padding: [50, 50] });
+
+                    // Add node markers
+                    nodes.forEach(node => {
+                        L.circleMarker([node.lat, node.lon], {
+                            radius: 6,
+                            fillColor: '#95a5a6',
+                            color: '#2c3e50',
+                            weight: 2,
+                            fillOpacity: 0.7
+                        }).bindPopup(`<b>${node.name}</b>`).addTo(map);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading nodes:', error);
+            }
+        }
+
+        // Load rider data
+        async function loadData() {
+            try {
+                const response = await fetch('/api/all_positions');
+                riders = await response.json();
+
+                updateRiderMarkers();
+                updateRiderList();
+                updateStats();
+                loadNotifications();
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+        
+        // Load notifications
+        async function loadNotifications() {
+            try {
+                const response = await fetch('/api/notifications');
+                const notifs = await response.json();
+                
+                const container = document.getElementById('notifications');
+                if (notifs.length === 0) {
+                    container.innerHTML = '<p style="color:#95a5a6;font-style:italic;font-size:12px;">No recent notifications</p>';
+                    return;
+                }
+                
+                container.innerHTML = '';
+                notifs.reverse().forEach(notif => {
+                    const div = document.createElement('div');
+                    div.className = `notification ${notif.type}`;
+                    
+                    const icon = notif.type === 'pickup' ? '📦' : '✅';
+                    const action = notif.type === 'pickup' ? 'picked up' : 'delivered';
+                    
+                    div.innerHTML = `
+                        <div>${icon} <strong>Parcel #${notif.parcelId}</strong> ${action}</div>
+                        <div>by ${notif.riderName} at ${notif.locationName}</div>
+                        <div class="notification-time">${notif.timestamp}</div>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+            }
+        }
+
+        // Update rider markers on map
+        function updateRiderMarkers() {
+            // Remove old markers
+            Object.values(riderMarkers).forEach(marker => map.removeLayer(marker));
+            riderMarkers = {};
+
+            // Add new markers for each rider
+            riders.forEach(rider => {
+                if (rider.lat && rider.lon) {
+                    const vehicleIcon = rider.vehicleType === 'Car' ? '🚗' : '🚴';
+                    // Create custom icon for rider
+                    const icon = L.divIcon({
+                        className: 'rider-marker',
+                        html: `<div style="background:${rider.status === 'delivering' ? '#f39c12' : '#2ecc71'}; 
+                                          width:30px; height:30px; border-radius:50%; 
+                                          border:3px solid white; display:flex; 
+                                          align-items:center; justify-content:center; 
+                                          font-size:18px; box-shadow:0 2px 8px rgba(0,0,0,0.3);">
+                                    ${vehicleIcon}
+                               </div>`,
+                        iconSize: [30, 30],
+                        iconAnchor: [15, 15]
+                    });
+
+                    const marker = L.marker([rider.lat, rider.lon], { icon }).addTo(map);
+                    
+                    // Create popup content
+                    let popupContent = `
+                        <div style="min-width:200px;">
+                            <h3 style="margin:0 0 10px 0;">${rider.riderName}</h3>
+                            <p style="margin:5px 0;"><strong>Type:</strong> ${rider.vehicleType || 'Rider'}</p>
+                            <p style="margin:5px 0;"><strong>Status:</strong> ${rider.status}</p>
+                            <p style="margin:5px 0;"><strong>Parcels:</strong> ${rider.parcelCount}/${rider.capacity}</p>
+                            <hr style="margin:10px 0;">
+                            <p style="margin:5px 0; font-weight:bold;">Assigned Parcels:</p>
+                    `;
+
+                    if (rider.parcelIds && rider.parcelIds.length > 0) {
+                        rider.parcelIds.forEach(async (parcelId) => {
+                            popupContent += `<p style="margin:3px 0;">📦 Parcel #${parcelId}</p>`;
+                        });
+                    } else {
+                        popupContent += `<p style="margin:3px 0; color:#999; font-style:italic;">No parcels</p>`;
+                    }
+
+                    popupContent += `</div>`;
+                    marker.bindPopup(popupContent);
+
+                    // Click handler
+                    marker.on('click', () => {
+                        selectedRiderId = rider.riderId;
+                        updateRiderList();
+                        drawRiderRoute(rider);
+                    });
+
+                    riderMarkers[rider.riderId] = marker;
+                }
+            });
+        }
+        
+        // Draw rider's planned route on map
+        async function drawRiderRoute(rider) {
+            // Remove existing route line
+            if (routeLine) {
+                map.removeLayer(routeLine);
+                routeLine = null;
+            }
+            
+            if (!rider.riderId) return;
+            
+            try {
+                // Get rider details with route
+                const response = await fetch(`/api/rider/${rider.riderId}`);
+                const riderData = await response.json();
+                
+                if (riderData.plannedRoute && riderData.plannedRoute.length > 0) {
+                    // Get nodes to build route coordinates
+                    const nodesResponse = await fetch('/api/nodes');
+                    const nodes = await nodesResponse.json();
+                    const nodeMap = {};
+                    nodes.forEach(node => {
+                        nodeMap[node.id] = { lat: node.lat, lon: node.lon, name: node.name };
+                    });
+                    
+                    // Build route coordinates
+                    const routeCoords = [];
+                    for (let i = 0; i < riderData.plannedRoute.length; i++) {
+                        const nodeId = riderData.plannedRoute[i];
+                        const node = nodeMap[nodeId];
+                        if (node) {
+                            routeCoords.push([node.lat, node.lon]);
+                        }
+                    }
+                    
+                    // Draw route line
+                    if (routeCoords.length > 1) {
+                        routeLine = L.polyline(routeCoords, {
+                            color: '#667eea',
+                            weight: 4,
+                            opacity: 0.7,
+                            dashArray: '10, 5'
+                        }).addTo(map);
+                        
+                        // Add markers for route waypoints
+                        routeCoords.forEach((coord, idx) => {
+                            const nodeId = riderData.plannedRoute[idx];
+                            const node = nodeMap[nodeId];
+                            const isCurrentPos = (idx === riderData.routeIndex);
+                            
+                            L.circleMarker(coord, {
+                                radius: isCurrentPos ? 8 : 5,
+                                fillColor: isCurrentPos ? '#e74c3c' : '#667eea',
+                                color: '#fff',
+                                weight: 2,
+                                fillOpacity: 0.8
+                            }).bindPopup(`${node ? node.name : 'Node ' + nodeId}${isCurrentPos ? ' (Current)' : ''}`);
+                        });
+                        
+                        // Fit map to show entire route
+                        map.fitBounds(routeLine.getBounds(), { padding: [50, 50] });
+                    }
+                }
+            } catch (error) {
+                console.error('Error drawing route:', error);
+            }
+        }
+
+        // Update rider list in sidebar
+        function updateRiderList() {
+            const container = document.getElementById('riderList');
+            container.innerHTML = '';
+
+            if (riders.length === 0) {
+                container.innerHTML = '<p style="color:#95a5a6; font-style:italic;">No active riders</p>';
+                return;
+            }
+
+            riders.forEach(rider => {
+                const item = document.createElement('div');
+                item.className = 'rider-item' + (rider.riderId === selectedRiderId ? ' selected' : '');
+                item.onclick = () => {
+                    selectedRiderId = rider.riderId;
+                    updateRiderList();
+                    if (riderMarkers[rider.riderId]) {
+                        map.setView([rider.lat, rider.lon], 15);
+                        riderMarkers[rider.riderId].openPopup();
+                        drawRiderRoute(rider);
+                    }
+                };
+
+                const statusBadge = rider.status === 'delivering' ? 'badge-delivering' : 'badge-available';
+                item.innerHTML = `
+                    <div class="rider-name">
+                        ${rider.riderName}
+                        <span class="badge ${statusBadge}">${rider.status}</span>
+                    </div>
+                    <div class="rider-info">
+                        Parcels: ${rider.parcelCount}/${rider.capacity}
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Update statistics
+        function updateStats() {
+            document.getElementById('activeRiders').textContent = riders.length;
+            const totalParcels = riders.reduce((sum, r) => sum + r.parcelCount, 0);
+            document.getElementById('totalParcels').textContent = totalParcels;
+        }
+
+        // Advance time
+        async function advanceTime() {
+            try {
+                await fetch('/api/advance_time', { method: 'POST' });
+                await loadData();
+            } catch (error) {
+                console.error('Error advancing time:', error);
+            }
+        }
+
+        // Undo move
+        async function undoMove() {
+            try {
+                const response = await fetch('/api/undo', { method: 'POST' });
+                if (response.ok) {
+                    await loadData();
+                } else {
+                    alert('Nothing to undo');
+                }
+            } catch (error) {
+                console.error('Error undoing:', error);
+            }
+        }
+
+        // Track by ID
+        async function trackById() {
+            const parcelId = document.getElementById('trackingId').value;
+            if (!parcelId) return;
+
+            try {
+                const response = await fetch(`/api/track/${parcelId}`);
+                if (!response.ok) {
+                    alert('Parcel not found');
+                    return;
+                }
+
+                const parcel = await response.json();
+                const infoBox = document.getElementById('trackingInfo');
+                infoBox.style.display = 'block';
+
+                infoBox.innerHTML = `
+                    <div class="info-item"><span class="info-label">ID:</span> ${parcel.id}</div>
+                    <div class="info-item"><span class="info-label">Status:</span> ${parcel.status}</div>
+                    <div class="info-item"><span class="info-label">Priority:</span> ${parcel.priority === 2 ? 'Overnight' : 'Standard'}</div>
+                    <div class="info-item"><span class="info-label">Weight:</span> ${parcel.weight} kg</div>
+                    <div class="info-item"><span class="info-label">Progress:</span> ${parcel.routeProgress}/${parcel.routeLength} nodes</div>
+                `;
+
+                // Pan to parcel location
+                if (parcel.currentLat && parcel.currentLon) {
+                    map.setView([parcel.currentLat, parcel.currentLon], 15);
+                }
+            } catch (error) {
+                console.error('Error tracking parcel:', error);
+            }
+        }
+
+        // Clear all notifications
+        async function clearNotifications() {
+            try {
+                await fetch('/api/notifications/clear', { method: 'POST' });
+                loadNotifications(); // Refresh the display
+            } catch (error) {
+                console.error('Error clearing notifications:', error);
+            }
+        }
+
+        // Auto-update toggle
+        document.getElementById('autoUpdateToggle').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                autoUpdateInterval = setInterval(loadData, 1000);
+            } else {
+                clearInterval(autoUpdateInterval);
+            }
+        });
+
+        // Initial load
+        initMap();
+        loadData();
+        autoUpdateInterval = setInterval(loadData, 1000);
+    </script>
+</body>
+</html>
